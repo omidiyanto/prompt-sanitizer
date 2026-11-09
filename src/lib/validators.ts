@@ -82,3 +82,16 @@ export function isHost(value: string): boolean {
 export function isSecret(value: string): boolean {
   return !TRIVIAL_SECRETS.has(value.toLowerCase()) && !/^[*x•.]+$/i.test(value);
 }
+
+function entropy(value: string): number {
+  const counts = new Map<string, number>();
+  for (const char of value) counts.set(char, (counts.get(char) ?? 0) + 1);
+  let bits = 0;
+  for (const count of counts.values()) bits -= (count / value.length) * Math.log2(count / value.length);
+  return bits;
+}
+
+export function looksRandom(value: string): boolean {
+  if (/^[0-9a-f]+$/i.test(value)) return /\d/.test(value) && /[a-f]/i.test(value) && entropy(value) >= 3;
+  return (value.match(/\d/g)?.length ?? 0) >= 2 && /[a-z]/.test(value) && /[A-Z]/.test(value) && entropy(value) >= 4.2;
+}

@@ -123,6 +123,24 @@ describe('secrets', () => {
     expect(clean('password=******** token: null')).toBe('password=******** token: null');
   });
 
+  it('redacts bare random tokens such as openssl rand output', () => {
+    const hex = 'ccc9bf0ed0f22c3bf8e2a8fe744f558fdaf601fce8429ae9e26d738617367f1b';
+    expect(clean(`root@omi-vm:~# openssl rand -hex 32\n${hex}`)).toBe('root@[HOST_1]:~# openssl rand -hex 32\n[SECRET_1]');
+    expect(clean('secret is q7Zp2Kx9LmN4vB8tR1wY6cF3hJ0sD5gA+eU=')).toBe('secret is [SECRET_1]');
+  });
+
+  it.each([
+    'commit 3f2a9c1 fixed it',
+    'commit 3f786850e387550fdab836ed7e6dc881de23001b',
+    'image@sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+    '00000000000000000000000000000000',
+    'AbstractSingletonProxyFactoryBean2Impl',
+    'MAX_CONNECTIONS_PER_HOST_2_DEFAULT_VALUE',
+    '550e8400-e29b-41d4-a716-446655440000',
+  ])('keeps non-random token %j', (input) => {
+    expect(clean(input)).toBe(input);
+  });
+
   it('does not redact prose that merely mentions Bearer auth', () => {
     expect(clean('Use Bearer authentication here')).toBe('Use Bearer authentication here');
   });
@@ -174,10 +192,20 @@ describe('custom terms', () => {
     { label: 'CLIENT', value: 'Initech (Asia)' },
   ];
 
-  it('redacts dictionary terms case-insensitively with word boundaries', () => {
-    expect(clean('pt maju jaya serves Globex, not Globexx or Initech (Asia).', { terms })).toBe(
-      '[COMPANY_1] serves [CLIENT_1], not Globexx or [CLIENT_2].',
+  it('redacts dictionary terms case-insensitively', () => {
+    expect(clean('pt maju jaya serves Globex and Initech (Asia).', { terms })).toBe(
+      '[COMPANY_1] serves [CLIENT_1] and [CLIENT_2].',
     );
+  });
+
+  it('redacts terms inside longer words such as hostnames', () => {
+    expect(clean('cpdigicli is down, DIGI-gw too', { terms: [{ label: 'CLIENT', value: 'digi' }] })).toBe(
+      'cp[CLIENT_1]cli is down, [CLIENT_1]-gw too',
+    );
+  });
+
+  it('keeps short terms to whole words', () => {
+    expect(clean('ABC team, not abcde', { terms: [{ label: 'CLIENT', value: 'abc' }] })).toBe('[CLIENT_1] team, not abcde');
   });
 
   it('wins over built-in detectors', () => {

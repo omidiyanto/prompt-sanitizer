@@ -36,7 +36,7 @@
         <span class="count">{termCount} {termCount === 1 ? 'term' : 'terms'}</span>
       </div>
       <p class="help">
-        One per line as <code>LABEL: value</code>. Matched case-insensitively on whole words and replaced with
+        One per line as <code>LABEL: value</code>. Matched case-insensitively, also inside longer words for terms of 4+ characters, and replaced with
         <code>[LABEL_1]</code>, <code>[LABEL_2]</code>, …
       </p>
       <textarea

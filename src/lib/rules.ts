@@ -1,4 +1,4 @@
-import { isHost, isIPv4, isIPv6, isNationalId, isPhone, isSecret, isUser, passesLuhn } from './validators';
+import { isHost, isIPv4, isIPv6, isNationalId, isPhone, isSecret, isUser, looksRandom, passesLuhn } from './validators';
 
 export type Category =
   | 'email'
@@ -57,6 +57,7 @@ export interface Rule {
   label?: string;
   priority: number;
   pattern: RegExp;
+  validate?: (value: string) => boolean;
 }
 
 const SECRET_KEY =
@@ -183,6 +184,12 @@ export const RULES: readonly Rule[] = [
       String.raw`(?<![\w.-])(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+${PRIVATE_TLD}(?!\.?[\w-])`,
       'dg',
     ),
+  },
+  {
+    label: 'SECRET',
+    priority: 45,
+    pattern: /(?<![\w+/=.-])(?<!\b(?:commit|sha\d*|digest|checksum)[:= \t]+)(?:[0-9a-fA-F]{32,}|[A-Za-z0-9+/_-]{32,}={0,2})(?![\w+/=.-])/dg,
+    validate: looksRandom,
   },
   {
     label: 'PHONE',

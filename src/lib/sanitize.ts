@@ -34,12 +34,24 @@ const CUSTOM_PRIORITY = 100;
 const DOMAIN_PRIORITY = 97;
 const PROPAGATED_PRIORITY = 10;
 const MIN_PROPAGATED_LENGTH = 3;
+const MIN_INNER_TERM_LENGTH = 4;
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 
+const alternation = (values: Iterable<string>) =>
+  [...new Set(values)].sort((a, b) => b.length - a.length).map(escapeRegExp).join('|');
+
+const wholeWord = (alternatives: string) => `(?<![\\p{L}\\p{N}_])(?:${alternatives})(?![\\p{L}\\p{N}_])`;
+
 function literalPattern(values: Iterable<string>, flags: string): RegExp {
-  const alternatives = [...new Set(values)].sort((a, b) => b.length - a.length).map(escapeRegExp).join('|');
-  return new RegExp(`(?<![\\p{L}\\p{N}_])(?:${alternatives})(?![\\p{L}\\p{N}_])`, `g${flags}u`);
+  return new RegExp(wholeWord(alternation(values)), `g${flags}u`);
+}
+
+function termPattern(values: string[]): RegExp {
+  const inner = values.filter((value) => value.length >= MIN_INNER_TERM_LENGTH);
+  const short = values.filter((value) => value.length < MIN_INNER_TERM_LENGTH);
+  const parts = [inner.length > 0 ? `(?:${alternation(inner)})` : '', short.length > 0 ? wholeWord(alternation(short)) : ''];
+  return new RegExp(parts.filter(Boolean).join('|'), 'giu');
 }
 
 function groupLabel(name: string): string {
@@ -57,8 +69,10 @@ function collectRuleSpans(text: string, enabled: Record<Category, boolean>, add:
         if (!range) continue;
         const category = LABEL_CATEGORY[label];
         if (category && !enabled[category]) continue;
+        const value = text.slice(range[0], range[1]);
+        if (rule.validate && !rule.validate(value)) continue;
         const validate = VALIDATORS[label];
-        if (validate && !validate(text.slice(range[0], range[1]))) continue;
+        if (validate && !validate(value)) continue;
         add({ start: range[0], end: range[1], label, priority: rule.priority });
       }
     }
@@ -88,7 +102,7 @@ export function sanitize(text: string, options: SanitizeOptions): SanitizeResult
   const terms = options.terms.filter((term) => term.value.trim());
   if (terms.length > 0) {
     const labels = new Map(terms.map((term) => [term.value.trim().toLowerCase(), term.label]));
-    for (const match of text.matchAll(literalPattern(labels.keys(), 'i'))) {
+    for (const match of text.matchAll(termPattern([...labels.keys()]))) {
       const label = labels.get(match[0].toLowerCase()) ?? 'CUSTOM';
       add({ start: match.index, end: match.index + match[0].length, label, priority: CUSTOM_PRIORITY });
     }
