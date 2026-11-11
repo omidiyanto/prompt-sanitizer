@@ -25,11 +25,11 @@ Everything runs in your browser. There is no backend, no database and no analyti
 | `USER` | Users in shell prompts, `ssh user@`, sshd/sudo logs, `/home/<user>`, `C:\Users\<user>`, `username=` keys, URL credentials | Context |
 | `SECRET` | `password=`/`api_key:`/`*_TOKEN=` values (JSON, YAML, env, CLI flags), Bearer/Basic auth, cookies, JWTs, AWS/GitHub/GitLab/Slack/Google/OpenAI/Anthropic/Stripe/npm keys, SQL `IDENTIFIED BY`, `.netrc`, bare random hex/base64 strings of 32+ characters (e.g. `openssl rand` output; hashes after `commit`/`sha256:`/`digest` are kept) | Context, known token formats, entropy |
 | `PRIVATE_KEY` | Whole PEM private key blocks | Pattern |
-| `PHONE` | `+62 812-…`, `0812-…`, `(415) 555-0132` | Pattern + digit count |
+| `PHONE` | `+62 812-…`, `0812-…`, `(415) 555-0132` | Pattern + dellt count |
 | `CARD` | Payment card numbers | Pattern + Luhn checksum |
 | `NATIONAL_ID` | Indonesian NIK and NPWP, US SSN | Pattern + structure validation |
 | `LOCATION` | `Jl. …` / `221 Baker Street` addresses, `alamat:` values, GPS coordinates | Pattern + context |
-| your label | Anything you list under **Settings → Your terms** | Case-insensitive; terms of 4+ characters also match inside words (`cpdigicli` → `cp[CLIENT_1]cli`) |
+| your label | Anything you list under **Settings → Your terms** | Case-insensitive; terms of 4+ characters also match inside words (`vmdellcli` → `vm[CLIENT_1]cli`) |
 
 Public domains such as `github.com` are left readable unless you block them. System accounts (`root`, `admin`, `ubuntu`, …), `localhost` and placeholder values (`null`, `********`) are left alone too.
 
