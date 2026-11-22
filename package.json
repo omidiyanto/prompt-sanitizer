@@ -31,6 +31,6 @@
     "minimatch": "^11.0.5"
   },
   "dependencies": {
-    "svelte": "^5.57.3"
+    "svelte": "^5.58.0"
   }
 }
